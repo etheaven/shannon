@@ -240,7 +240,7 @@ export async function runClaudePrompt(
 
   // 5. Configure SDK options
   const options = {
-    model: 'claude-sonnet-4-5-20250929',
+    model: process.env.SHANNON_MODEL || 'claude-sonnet-4-6-20260217',
     maxTurns: 10_000,
     cwd: sourceDir,
     permissionMode: 'bypassPermissions' as const,

@@ -21,3 +21,4 @@ export type { AgentExecutionInput } from './agent-execution.js';
 
 export { assembleFinalReport, injectModelIntoReport } from './reporting.js';
 export { loadPrompt } from './prompt-manager.js';
+export { sendTelegramNotification } from './telegram-notifier.js';

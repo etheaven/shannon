@@ -32,6 +32,7 @@ import type { AgentMetrics, ResumeState } from './shared.js';
 import { copyDeliverablesToAudit, type SessionMetadata } from '../audit/utils.js';
 import { readJson, fileExists } from '../utils/file-io.js';
 import { assembleFinalReport, injectModelIntoReport } from '../services/reporting.js';
+import { sendTelegramNotification } from '../services/telegram-notifier.js';
 import { AGENTS } from '../session-manager.js';
 import { executeGitCommandWithRetry } from '../services/git-manager.js';
 import type { ResumeAttempt } from '../audit/metrics-tracker.js';
@@ -656,6 +657,10 @@ export async function logWorkflowComplete(
     });
   }
 
-  // 7. Clean up container
+  // 7. Send Telegram notification (fire-and-forget)
+  const notifyLogger = createActivityLogger();
+  await sendTelegramNotification(sessionMetadata, cumulativeSummary, notifyLogger);
+
+  // 8. Clean up container
   removeContainer(workflowId);
 }

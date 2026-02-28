@@ -6,7 +6,7 @@
 
 <a href="https://trendshift.io/repositories/15604" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15604" alt="KeygraphHQ%2Fshannon | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
-<img src="./assets/shannon-screen.png?v=2" alt="Shannon Screen" width="100%">
+<img src="./assets/github-banner.png" alt="Shannon — AI Penetration Testing Framework" width="100%">
 
 # Shannon is your fully autonomous AI pentester.
 
@@ -335,6 +335,18 @@ rules:
 #### TOTP Setup for 2FA
 
 If your application uses two-factor authentication, simply add the TOTP secret to your config file. The AI will automatically generate the required codes during testing.
+
+#### Subscription Plan Rate Limits
+
+Anthropic subscription plans reset usage on a **rolling 5-hour window**. The default retry strategy (30-min max backoff) will exhaust retries before the window resets. Add this to your config:
+
+```yaml
+pipeline:
+  retry_preset: subscription          # Extends max backoff to 6h, 100 retries
+  max_concurrent_pipelines: 2         # Run 2 of 5 pipelines at a time (reduces burst API usage)
+```
+
+`max_concurrent_pipelines` controls how many vulnerability pipelines run simultaneously (1-5, default: 5). Lower values reduce the chance of hitting rate limits but increase wall-clock time.
 
 ### [EXPERIMENTAL - UNSUPPORTED] Router Mode (Alternative Providers)
 

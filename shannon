@@ -53,6 +53,8 @@ Options for 'start':
   WORKSPACE=<name>       Named workspace (auto-resumes if exists, creates if new)
   PIPELINE_TESTING=true  Use minimal prompts for fast testing
   ROUTER=true            Route requests through claude-code-router (multi-model support)
+  KILO=true              Route requests through Kilo AI Gateway (multi-provider via router)
+  KILO_MODEL=<model>     Model for Kilo mode (default: anthropic/claude-sonnet-4-5)
 
 Options for 'stop':
   CLEAN=true             Remove all data including volumes
@@ -62,6 +64,7 @@ Examples:
   ./shannon start URL=https://example.com REPO=repo-name WORKSPACE=q1-audit
   ./shannon start URL=https://example.com REPO=repo-name CONFIG=./config.yaml
   ./shannon start URL=https://example.com REPO=repo-name OUTPUT=./my-reports
+  ./shannon start URL=https://example.com REPO=repo-name KILO=true
   ./shannon workspaces
   ./shannon logs ID=example.com_shannon-1234567890
   ./shannon stop CLEAN=true
@@ -83,6 +86,8 @@ parse_args() {
       PIPELINE_TESTING=*) PIPELINE_TESTING="${arg#PIPELINE_TESTING=}" ;;
       REBUILD=*) REBUILD="${arg#REBUILD=}" ;;
       ROUTER=*) ROUTER="${arg#ROUTER=}" ;;
+      KILO=*) KILO="${arg#KILO=}" ;;
+      KILO_MODEL=*) KILO_MODEL="${arg#KILO_MODEL=}" ;;
       WORKSPACE=*) WORKSPACE="${arg#WORKSPACE=}" ;;
     esac
   done
@@ -142,14 +147,25 @@ cmd_start() {
     exit 1
   fi
 
-  # Check for API key (router mode can use alternative provider API keys)
+  # Mutual exclusion: KILO and ROUTER cannot be used together
+  if [ "$KILO" = "true" ] && [ "$ROUTER" = "true" ]; then
+    echo "ERROR: KILO=true and ROUTER=true are mutually exclusive"
+    echo "       Use one or the other, not both"
+    exit 1
+  fi
+
+  # Check for API key (router/kilo mode can use alternative provider API keys)
   if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
     if [ "$ROUTER" = "true" ] && { [ -n "$OPENAI_API_KEY" ] || [ -n "$OPENROUTER_API_KEY" ]; }; then
       # Router mode with alternative provider - set a placeholder for SDK init
       export ANTHROPIC_API_KEY="router-mode"
+    elif [ "$KILO" = "true" ] && [ -n "$KILO_API_KEY" ]; then
+      # Kilo mode - set a placeholder for SDK init
+      export ANTHROPIC_API_KEY="kilo-mode"
     else
       echo "ERROR: Set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN in .env"
       echo "       (or use ROUTER=true with OPENAI_API_KEY or OPENROUTER_API_KEY)"
+      echo "       (or use KILO=true with KILO_API_KEY)"
       exit 1
     fi
   fi
@@ -206,6 +222,43 @@ cmd_start() {
     export ANTHROPIC_BASE_URL="http://router:3456"
     # Set auth token to match router's APIKEY
     export ANTHROPIC_AUTH_TOKEN="shannon-router-key"
+  fi
+
+  # Handle KILO flag - route through Kilo AI Gateway via claude-code-router
+  # Kilo uses OpenAI-compatible API, so it needs the router to translate from Anthropic format
+  if [ "$KILO" = "true" ]; then
+    if [ -z "$KILO_API_KEY" ]; then
+      echo "ERROR: KILO_API_KEY is required when using KILO=true"
+      echo "       Set KILO_API_KEY in .env"
+      exit 1
+    fi
+
+    # Default model if not specified
+    if [ -z "$KILO_MODEL" ]; then
+      KILO_MODEL="anthropic/claude-sonnet-4-5"
+    fi
+    export KILO_MODEL
+    export KILO_API_KEY
+
+    # Set ROUTER_DEFAULT so the router knows which provider/model to use
+    export ROUTER_DEFAULT="kilo,$KILO_MODEL"
+
+    # Start the router (same mechanism as ROUTER=true)
+    if docker compose -f "$COMPOSE_FILE" $COMPOSE_OVERRIDE --profile router ps router 2>/dev/null | grep -q "running"; then
+      echo "Router already running, skipping startup..."
+    else
+      echo "Starting router for Kilo AI Gateway..."
+      docker compose -f "$COMPOSE_FILE" $COMPOSE_OVERRIDE --profile router up -d router
+
+      echo "Waiting for router to start..."
+      sleep 5
+    fi
+
+    # Route SDK requests through the local router
+    export ANTHROPIC_BASE_URL="http://router:3456"
+    export ANTHROPIC_AUTH_TOKEN="shannon-router-key"
+    export SHANNON_MODEL="$KILO_MODEL"
+    echo "Kilo Gateway configured via router (model: $KILO_MODEL)"
   fi
 
   # Ensure audit-logs directory exists with write permissions for container user (UID 1001)

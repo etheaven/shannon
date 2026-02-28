@@ -159,9 +159,10 @@ function classifySdkError(
 async function validateCredentials(
   logger: ActivityLogger
 ): Promise<Result<void, PentestError>> {
-  // 1. Router mode — can't validate provider keys, just warn
+  // 1. Gateway/router mode — can't validate provider keys, just warn
   if (process.env.ANTHROPIC_BASE_URL) {
-    logger.warn('Router mode detected — skipping API credential validation');
+    const mode = process.env.KILO_MODEL ? 'Kilo Gateway' : 'Router';
+    logger.warn(`${mode} mode detected — skipping API credential validation`);
     return ok(undefined);
   }
 

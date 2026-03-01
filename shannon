@@ -54,7 +54,7 @@ Options for 'start':
   PIPELINE_TESTING=true  Use minimal prompts for fast testing
   ROUTER=true            Route requests through claude-code-router (multi-model support)
   KILO=true              Route requests through Kilo AI Gateway (multi-provider via router)
-  KILO_MODEL=<model>     Model for Kilo mode (default: anthropic/claude-sonnet-4-5)
+  KILO_MODEL=<model>     Model for Kilo mode (default: minimax/minimax-m2.5:free)
 
 Options for 'stop':
   CLEAN=true             Remove all data including volumes
@@ -233,9 +233,9 @@ cmd_start() {
       exit 1
     fi
 
-    # Default model if not specified
+    # Default model if not specified — use free tier to minimize cost
     if [ -z "$KILO_MODEL" ]; then
-      KILO_MODEL="anthropic/claude-sonnet-4-5"
+      KILO_MODEL="minimax/minimax-m2.5:free"
     fi
     export KILO_MODEL
     export KILO_API_KEY

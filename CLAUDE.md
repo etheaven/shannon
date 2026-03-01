@@ -148,6 +148,15 @@ Comments must be **timeless** — no references to this conversation, refactorin
 
 **Config:** `shannon` (CLI), `docker-compose.yml`, `configs/`, `prompts/`
 
+## Pre-Audit Checklist
+
+**ALWAYS sync repos before starting any audit.** Shannon performs white-box source code analysis — running against stale code produces false positives for already-fixed vulnerabilities.
+
+1. Fix docker permission issues: `sudo chown -R ubuntu:ubuntu ./repos/<repo>/.git ./repos/<repo>/deliverables`
+2. Pull latest target repo: `cd ./repos/<repo> && git checkout -- . && git pull`
+3. Pull latest Shannon: `git pull origin main`
+4. Then start the audit
+
 ## Troubleshooting
 
 - **"Repository not found"** — `REPO` must be a folder name inside `./repos/`, not an absolute path. Clone or symlink your repo there first: `ln -s /path/to/repo ./repos/my-repo`

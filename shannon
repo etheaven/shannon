@@ -88,6 +88,8 @@ parse_args() {
       ROUTER=*) ROUTER="${arg#ROUTER=}" ;;
       KILO=*) KILO="${arg#KILO=}" ;;
       KILO_MODEL=*) KILO_MODEL="${arg#KILO_MODEL=}" ;;
+      ECOMAGENT=*) ECOMAGENT="${arg#ECOMAGENT=}" ;;
+      ECOMAGENT_MODEL=*) ECOMAGENT_MODEL="${arg#ECOMAGENT_MODEL=}" ;;
       WORKSPACE=*) WORKSPACE="${arg#WORKSPACE=}" ;;
     esac
   done

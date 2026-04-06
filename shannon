@@ -261,6 +261,42 @@ cmd_start() {
     echo "Kilo Gateway configured via router (model: $KILO_MODEL)"
   fi
 
+  # Handle ECOMAGENT flag - route through EcoMagent API via claude-code-router
+  if [ "$ECOMAGENT" = "true" ]; then
+    if [ -z "$ECOMAGENT_API_KEY" ]; then
+      echo "ERROR: ECOMAGENT_API_KEY is required when using ECOMAGENT=true"
+      echo "       Set ECOMAGENT_API_KEY in .env"
+      exit 1
+    fi
+
+    # Default model if not specified
+    if [ -z "$ECOMAGENT_MODEL" ]; then
+      ECOMAGENT_MODEL="claude-sonnet-4-6"
+    fi
+    export ECOMAGENT_MODEL
+    export ECOMAGENT_API_KEY
+
+    # Set ROUTER_DEFAULT so the router knows which provider/model to use
+    export ROUTER_DEFAULT="ecomagent,$ECOMAGENT_MODEL"
+
+    # Start the router (same mechanism as ROUTER=true)
+    if docker compose -f "$COMPOSE_FILE" $COMPOSE_OVERRIDE --profile router ps router 2>/dev/null | grep -q "running"; then
+      echo "Router already running, skipping startup..."
+    else
+      echo "Starting router for EcoMagent API..."
+      docker compose -f "$COMPOSE_FILE" $COMPOSE_OVERRIDE --profile router up -d router
+
+      echo "Waiting for router to start..."
+      sleep 5
+    fi
+
+    # Route SDK requests through the local router
+    export ANTHROPIC_BASE_URL="http://router:3456"
+    export ANTHROPIC_AUTH_TOKEN="shannon-router-key"
+    export SHANNON_MODEL="$ECOMAGENT_MODEL"
+    echo "EcoMagent API configured via router (model: $ECOMAGENT_MODEL)"
+  fi
+
   # Ensure audit-logs directory exists with write permissions for container user (UID 1001)
   mkdir -p ./audit-logs
   chmod 777 ./audit-logs

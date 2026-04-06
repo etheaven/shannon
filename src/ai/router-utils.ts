@@ -18,6 +18,12 @@ export function getActualModelName(sdkReportedModel?: string): string | undefine
     return kiloModel;
   }
 
+  // EcoMagent mode — model is set directly (e.g., "claude-sonnet-4-6")
+  const ecomagentModel = process.env.ECOMAGENT_MODEL;
+  if (routerBaseUrl && ecomagentModel) {
+    return ecomagentModel;
+  }
+
   // Router mode — ROUTER_DEFAULT format: "provider,model" (e.g., "gemini,gemini-2.5-pro")
   const routerDefault = process.env.ROUTER_DEFAULT;
   if (routerBaseUrl && routerDefault) {

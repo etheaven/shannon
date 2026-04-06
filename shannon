@@ -279,9 +279,9 @@ cmd_start() {
       exit 1
     fi
 
-    # Default model if not specified
+    # Default model if not specified — EcoMagent only supports claude-opus-4.6
     if [ -z "$ECOMAGENT_MODEL" ]; then
-      ECOMAGENT_MODEL="claude-sonnet-4-6"
+      ECOMAGENT_MODEL="claude-opus-4.6"
     fi
     export ECOMAGENT_MODEL
     export ECOMAGENT_API_KEY

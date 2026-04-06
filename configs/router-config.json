@@ -43,8 +43,7 @@
       "api_base_url": "https://api.ecomagent.in/v1/chat/completions",
       "api_key": "$ECOMAGENT_API_KEY",
       "models": [
-        "claude-opus-4.6",
-        "claude-sonnet-4-6"
+        "claude-opus-4.6"
       ]
     }
   ],

@@ -25,6 +25,8 @@ services:
       - ROUTER_DEFAULT=${ROUTER_DEFAULT:-}  # Model name when using router (e.g., "gemini,gemini-2.5-pro")
       - KILO_API_KEY=${KILO_API_KEY:-}
       - KILO_MODEL=${KILO_MODEL:-}
+      - ECOMAGENT_API_KEY=${ECOMAGENT_API_KEY:-}
+      - ECOMAGENT_MODEL=${ECOMAGENT_MODEL:-}
       - SHANNON_MODEL=${SHANNON_MODEL:-}
       - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:-}
       - CLAUDE_CODE_MAX_OUTPUT_TOKENS=${CLAUDE_CODE_MAX_OUTPUT_TOKENS:-64000}
@@ -66,6 +68,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - KILO_API_KEY=${KILO_API_KEY:-}
+      - ECOMAGENT_API_KEY=${ECOMAGENT_API_KEY:-}
       - ROUTER_DEFAULT=${ROUTER_DEFAULT:-openai,gpt-4o}
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3456/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]

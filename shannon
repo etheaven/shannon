@@ -147,14 +147,18 @@ cmd_start() {
     exit 1
   fi
 
-  # Mutual exclusion: KILO and ROUTER cannot be used together
-  if [ "$KILO" = "true" ] && [ "$ROUTER" = "true" ]; then
-    echo "ERROR: KILO=true and ROUTER=true are mutually exclusive"
-    echo "       Use one or the other, not both"
+  # Mutual exclusion: KILO, ROUTER, and ECOMAGENT cannot be used together
+  local provider_count=0
+  [ "$KILO" = "true" ] && provider_count=$((provider_count + 1))
+  [ "$ROUTER" = "true" ] && provider_count=$((provider_count + 1))
+  [ "$ECOMAGENT" = "true" ] && provider_count=$((provider_count + 1))
+  if [ "$provider_count" -gt 1 ]; then
+    echo "ERROR: KILO=true, ROUTER=true, and ECOMAGENT=true are mutually exclusive"
+    echo "       Use only one provider flag"
     exit 1
   fi
 
-  # Check for API key (router/kilo mode can use alternative provider API keys)
+  # Check for API key (router/kilo/ecomagent mode can use alternative provider API keys)
   if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
     if [ "$ROUTER" = "true" ] && { [ -n "$OPENAI_API_KEY" ] || [ -n "$OPENROUTER_API_KEY" ]; }; then
       # Router mode with alternative provider - set a placeholder for SDK init
@@ -162,10 +166,14 @@ cmd_start() {
     elif [ "$KILO" = "true" ] && [ -n "$KILO_API_KEY" ]; then
       # Kilo mode - set a placeholder for SDK init
       export ANTHROPIC_API_KEY="kilo-mode"
+    elif [ "$ECOMAGENT" = "true" ] && [ -n "$ECOMAGENT_API_KEY" ]; then
+      # EcoMagent mode - set a placeholder for SDK init
+      export ANTHROPIC_API_KEY="ecomagent-mode"
     else
       echo "ERROR: Set ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN in .env"
       echo "       (or use ROUTER=true with OPENAI_API_KEY or OPENROUTER_API_KEY)"
       echo "       (or use KILO=true with KILO_API_KEY)"
+      echo "       (or use ECOMAGENT=true with ECOMAGENT_API_KEY)"
       exit 1
     fi
   fi
